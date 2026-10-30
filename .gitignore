@@ -1,17 +1,25 @@
-# Dependencies
+# Dependencies (root and all subfolders)
 node_modules/
+**/node_modules/
 package-lock.json.backup
 
 # Environment files - NEVER commit secrets
 .env
 .env.*
 !.env.example
+**/.env
+**/.env.*
+!**/.env.example
 
 # Local SQLite databases & runtime data
 server/data/*.sqlite*
 server/data/*.db*
 *.sqlite
 *.sqlite3
+
+# Build outputs that can be rebuilt
+dist/
+**/dist/
 
 # Logs
 *.log
@@ -24,6 +32,3 @@ yarn-error.log*
 Thumbs.db
 .vscode/
 .idea/
-
-# Old / nested clone folders
-Vridhseva-/
