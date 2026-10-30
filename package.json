@@ -1,0 +1,27 @@
+{
+  "name": "vrudhseva",
+  "version": "1.0.0",
+  "description": "> *\"No elderly person should be left unidentified, unheard, or uncared for.\"*",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node --watch server/server.js",
+    "test": "node test/api.test.js && node test/e2e.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/engrosivekeyboardwatcher/Vridhseva-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/engrosivekeyboardwatcher/Vridhseva-/issues"
+  },
+  "homepage": "https://github.com/engrosivekeyboardwatcher/Vridhseva-#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.3.0"
+  }
+}
