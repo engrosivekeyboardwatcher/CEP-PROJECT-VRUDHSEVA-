@@ -1,4 +1,14 @@
 const path = require('node:path');
+
+// Auto-load .env file if present
+try {
+  if (typeof process.loadEnvFile === 'function') {
+    process.loadEnvFile();
+  }
+} catch {
+  // .env may not exist in production or CI/CD
+}
+
 const express = require('express');
 const cors = require('cors');
 

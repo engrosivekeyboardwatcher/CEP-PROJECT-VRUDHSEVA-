@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const GROQ_MODEL = process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
+const getGroqApiKey = () => process.env.GROQ_API_KEY;
+const getGroqModel = () => process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
 
 const SYSTEM_PROMPT = `You are "SevaBot" (सेवा-बॉट), a compassionate, highly knowledgeable AI care assistant for the VRUDHSEVA (वृद्धसेवा) platform.
 Your expertise is in Dementia Care, Alzheimer's support, elderly caregiving, geriatric well-being, and care-home practices (inspired by field observations at Madhurangan Old Age Home, Nagpur, India).
@@ -35,7 +35,10 @@ router.post('/', async (req, res) => {
       });
     }
 
-    if (!GROQ_API_KEY) {
+    const apiKey = getGroqApiKey();
+    const model = getGroqModel();
+
+    if (!apiKey) {
       return res.status(500).json({
         success: false,
         error: 'Groq API key is not configured.'
@@ -59,11 +62,11 @@ router.post('/', async (req, res) => {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: GROQ_MODEL,
+        model: model,
         messages: messages,
         temperature: 0.6,
         max_tokens: 800,
@@ -81,7 +84,7 @@ router.post('/', async (req, res) => {
         const fallbackRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${GROQ_API_KEY}`,
+            'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
@@ -116,7 +119,7 @@ router.post('/', async (req, res) => {
     res.json({
       success: true,
       reply: reply || 'I am here to help you. Could you please rephrase your caregiving question?',
-      model: data.model || GROQ_MODEL,
+      model: data.model || model,
       usage: data.usage
     });
 
@@ -134,7 +137,7 @@ router.get('/status', (req, res) => {
   res.json({
     success: true,
     status: 'online',
-    model: GROQ_MODEL,
+    model: getGroqModel(),
     provider: 'Groq Cloud',
     purpose: 'Dementia & Elderly Caregiving Query Assistant'
   });
