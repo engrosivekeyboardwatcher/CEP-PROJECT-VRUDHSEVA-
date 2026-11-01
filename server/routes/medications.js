@@ -56,6 +56,12 @@ router.post('/', (req, res) => {
     stmt.run(resident_name, drug_name, dosage, scheduled_time, shift || 'Morning', notes || '');
     const newMed = db.prepare('SELECT * FROM medications ORDER BY id DESC LIMIT 1').get();
 
+    // Asynchronously dispatch real-time notification to Telegram Caregiver Bot
+    try {
+      const { notifyMedication } = require('../telegram');
+      notifyMedication(newMed).catch(err => console.warn('[TELEGRAM MEDICATION DISPATCH ERROR]', err.message));
+    } catch (e) {}
+
     res.status(201).json({ success: true, message: 'Medication scheduled successfully', data: newMed });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

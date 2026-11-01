@@ -108,6 +108,14 @@ function initSchema() {
       message TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS telegram_subscribers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      chat_id TEXT UNIQUE NOT NULL,
+      first_name TEXT,
+      username TEXT,
+      subscribed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 
   // Seed initial data if tables are empty

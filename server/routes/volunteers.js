@@ -48,6 +48,12 @@ router.post('/', (req, res) => {
     stmt.run(name.trim(), cleanPhone, email.trim(), interest_area);
     const newVol = db.prepare('SELECT * FROM volunteers ORDER BY id DESC LIMIT 1').get();
 
+    // Asynchronously dispatch real-time notification to Telegram Caregiver Bot
+    try {
+      const { notifyVolunteer } = require('../telegram');
+      notifyVolunteer(newVol).catch(err => console.warn('[TELEGRAM VOLUNTEER DISPATCH ERROR]', err.message));
+    } catch (e) {}
+
     res.status(201).json({
       success: true,
       message: 'Thank you! Your volunteer application has been submitted to the home coordinator.',

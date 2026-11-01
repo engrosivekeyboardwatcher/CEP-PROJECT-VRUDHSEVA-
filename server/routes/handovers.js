@@ -52,6 +52,13 @@ router.post('/', (req, res) => {
     );
 
     const latest = db.prepare('SELECT * FROM staff_handovers ORDER BY id DESC LIMIT 1').get();
+
+    // Asynchronously dispatch real-time notification to Telegram Caregiver Bot
+    try {
+      const { notifyHandover } = require('../telegram');
+      notifyHandover(latest).catch(err => console.warn('[TELEGRAM HANDOVER DISPATCH ERROR]', err.message));
+    } catch (e) {}
+
     res.status(201).json({ success: true, message: 'Handover report filed successfully', data: latest });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

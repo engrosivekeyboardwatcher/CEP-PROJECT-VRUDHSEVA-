@@ -444,11 +444,15 @@ function applyLang(lang) {
   relabelMedButtons();
   updateApiStatusPill();
 
-  const chatInput = document.getElementById('chat-user-input');
-  if (chatInput) chatInput.placeholder = t('chat_placeholder');
-  const drawerInput = document.getElementById('drawer-chat-input');
-  if (drawerInput) drawerInput.placeholder = t('chat_placeholder');
-  updateChatWelcome();
+  if (typeof setChatLanguage === 'function') {
+    setChatLanguage(lang);
+  } else {
+    const chatInput = document.getElementById('chat-user-input');
+    if (chatInput) chatInput.placeholder = t('chat_placeholder');
+    const drawerInput = document.getElementById('drawer-chat-input');
+    if (drawerInput) drawerInput.placeholder = t('chat_placeholder');
+    updateChatWelcome();
+  }
 
   const menuOpen = document.getElementById('nav-panel')?.classList.contains('open');
   document.getElementById('menu-btn')?.setAttribute('aria-label', t(menuOpen ? 'menu_close' : 'menu_open'));
@@ -1565,6 +1569,28 @@ document.addEventListener('keydown', (e) => {
 // =========================================================
 let chatHistory = [];
 let isChatResponding = false;
+let chatLang = 'en';
+
+const CHAT_PROMPTS = {
+  en: [
+    { label: 'Repetitive questions', text: 'How should I handle repetitive questions from an elderly parent with dementia?' },
+    { label: 'Evening Sundowning', text: 'What can we do when an elderly resident gets anxious or agitated in the evening (Sundowning)?' },
+    { label: 'Wandering safety', text: 'How can we prevent wandering while maintaining the resident\'s freedom and dignity?' },
+    { label: 'Bathing resistance', text: 'What are gentle ways to assist someone who resists bathing or changing clothes?' }
+  ],
+  hi: [
+    { label: 'बार-बार सवाल पूछना', text: 'बुजुर्गों में याददाश्त कमजोर होने पर और बार-बार एक ही सवाल पूछने पर कैसे प्यार से संभालें?' },
+    { label: 'शाम की घबराहट', text: 'शाम के समय बुजुर्गों में बेचैनी व चिड़चिड़ापन (Sundowning) होने पर क्या उपाय करें?' },
+    { label: 'भटकने से बचाव', text: 'डिमेंशिया पीड़ित बुजुर्ग के घर से भटकने (Wandering) से सुरक्षा के क्या उपाय हैं?' },
+    { label: 'नहाने में सहयोग', text: 'यदि बुजुर्ग नहाने या कपड़े बदलने से मना करें तो शांति व सम्मान से कैसे समझाएं?' }
+  ],
+  mr: [
+    { label: 'प्रश्नांची पुनरावृत्ती', text: 'डिमेंशिया असणारे आजी किंवा आजोबा एकाच प्रश्नाची पुनरावृत्ती करत असतील तर कसे हाताळावे?' },
+    { label: 'संध्याकाळची अस्वस्थता', text: 'संध्याकाळच्या वेळी वृद्धांमध्ये वाढणारी अस्वस्थता (Sundowning) कशी शांत करावी?' },
+    { label: 'सुरक्षा व फिरणे', text: 'वृद्ध व्यक्ती घरातून विनाकारण बाहेर पडत असेल (Wandering) तर सुरक्षेसाठी काय काळजी घ्यावी?' },
+    { label: 'आंघोळीस नकार', text: 'आंघोळीस किंवा कपडे बदलण्यास नकार देणाऱ्या आजी-आजोबांना प्रेमाने कशी मदत करावी?' }
+  ]
+};
 
 function formatBotText(raw) {
   if (!raw) return '';
@@ -1654,9 +1680,58 @@ function removeTypingIndicator() {
   document.querySelectorAll('#chat-typing-indicator').forEach(el => el.remove());
 }
 
+function renderChatSuggestions(lang = chatLang) {
+  const prompts = CHAT_PROMPTS[lang] || CHAT_PROMPTS.en;
+  const bars = [
+    document.getElementById('chat-suggestions-bar'),
+    document.getElementById('drawer-suggestions')
+  ];
+
+  bars.forEach(bar => {
+    if (!bar) return;
+    bar.innerHTML = prompts.map(p => `
+      <button type="button" class="chip" data-prompt="${p.text.replace(/"/g, '&quot;')}">${p.label}</button>
+    `).join('');
+
+    bar.querySelectorAll('.chip[data-prompt]').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const prompt = chip.dataset.prompt;
+        if (prompt) sendChatMessage(prompt);
+      });
+    });
+  });
+}
+
+function setChatLanguage(lang) {
+  if (!['en', 'hi', 'mr'].includes(lang)) return;
+  chatLang = lang;
+
+  // Toggle active state across all language switchers
+  document.querySelectorAll('.chat-lang-btn').forEach(btn => {
+    const isActive = btn.dataset.chatLang === lang;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-pressed', String(isActive));
+  });
+
+  // Re-render suggestions tailored to the chosen language
+  renderChatSuggestions(lang);
+
+  // Update input placeholders
+  const pack = i18n[lang] || i18n.en;
+  const placeholderText = pack.chat_placeholder || i18n.en.chat_placeholder;
+  const mainInput = document.getElementById('chat-user-input');
+  if (mainInput) mainInput.placeholder = placeholderText;
+  const drawerInput = document.getElementById('drawer-chat-input');
+  if (drawerInput) drawerInput.placeholder = placeholderText;
+
+  // Update welcome greeting if no active user conversation yet
+  updateChatWelcome();
+}
+
 function updateChatWelcome() {
   if (chatHistory.length === 0) {
-    const welcome = t('chat_welcome');
+    const pack = i18n[chatLang] || i18n.en;
+    const welcome = pack.chat_welcome || i18n.en.chat_welcome;
     const threads = [
       document.getElementById('chat-thread'),
       document.getElementById('drawer-chat-thread')
@@ -1705,7 +1780,8 @@ async function sendChatMessage(rawText) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         message: text,
-        history: chatHistory
+        history: chatHistory,
+        language: chatLang
       })
     });
 
@@ -1735,7 +1811,18 @@ async function sendChatMessage(rawText) {
 }
 
 function initChatbot() {
-  updateChatWelcome();
+  // Wire up language switch buttons
+  document.querySelectorAll('.chat-lang-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const selected = btn.dataset.chatLang;
+      if (selected) {
+        setChatLanguage(selected);
+      }
+    });
+  });
+
+  setChatLanguage(currentLang || 'en');
 
   // Form submit handlers
   document.getElementById('chat-form')?.addEventListener('submit', (e) => {
@@ -1748,16 +1835,6 @@ function initChatbot() {
     e.preventDefault();
     const val = document.getElementById('drawer-chat-input')?.value;
     sendChatMessage(val);
-  });
-
-  // Suggestion chips
-  document.querySelectorAll('.chip[data-prompt]').forEach(chip => {
-    chip.addEventListener('click', () => {
-      const prompt = chip.dataset.prompt;
-      if (prompt) {
-        sendChatMessage(prompt);
-      }
-    });
   });
 
   // Clear chat button

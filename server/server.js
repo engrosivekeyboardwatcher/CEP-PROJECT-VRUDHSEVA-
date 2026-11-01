@@ -3,10 +3,15 @@ const path = require('node:path');
 // Auto-load .env file if present
 try {
   if (typeof process.loadEnvFile === 'function') {
-    process.loadEnvFile();
+    const rootEnv = path.resolve(__dirname, '../.env');
+    process.loadEnvFile(rootEnv);
   }
 } catch {
-  // .env may not exist in production or CI/CD
+  try {
+    process.loadEnvFile();
+  } catch {
+    // .env may not exist in production or CI/CD
+  }
 }
 
 const express = require('express');
@@ -69,6 +74,16 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// API Route for Telegram Bot Status
+app.get('/api/telegram/status', (req, res) => {
+  try {
+    const { getTelegramStatus } = require('./telegram');
+    res.json({ success: true, ...getTelegramStatus() });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Serve frontend static assets from project root
 const staticPath = path.resolve(__dirname, '..');
 app.use(express.static(staticPath));
@@ -94,8 +109,17 @@ if (require.main === module) {
     console.log(`  VRUDHSEVA (वृद्धसेवा) Server Running`);
     console.log(`  Local URL:    http://localhost:${PORT}`);
     console.log(`  API Health:   http://localhost:${PORT}/api/health`);
+    console.log(`  Telegram Bot: https://t.me/VRUSHSEVABOT`);
     console.log(`  Static Root:  ${staticPath}`);
     console.log(`====================================================`);
+
+    // Start background Telegram notification poller
+    try {
+      const { startTelegramPoller } = require('./telegram');
+      startTelegramPoller();
+    } catch (e) {
+      console.warn('[TELEGRAM] Startup error:', e.message);
+    }
   });
 
   const shutdown = () => {

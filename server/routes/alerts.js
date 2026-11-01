@@ -61,6 +61,12 @@ router.post('/', (req, res) => {
 
     const latest = db.prepare('SELECT * FROM emergency_alerts ORDER BY id DESC LIMIT 1').get();
 
+    // Asynchronously dispatch real-time notification to Telegram Caregiver Bot
+    try {
+      const { notifyAlert } = require('../telegram');
+      notifyAlert(latest).catch(err => console.warn('[TELEGRAM ALERT DISPATCH ERROR]', err.message));
+    } catch (e) {}
+
     res.status(201).json({
       success: true,
       message: 'Emergency trigger recorded; caregiver notified',

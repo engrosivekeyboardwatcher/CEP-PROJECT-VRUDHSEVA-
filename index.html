@@ -1043,6 +1043,66 @@
     .chat-btn-clear:hover {
       background: rgba(255,255,255,0.2);
     }
+    .chat-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+    .chat-lang-switcher {
+      display: inline-flex;
+      background: rgba(0, 0, 0, 0.26);
+      padding: 3px;
+      border-radius: 999px;
+      gap: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+    }
+    .chat-lang-btn {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 0.24rem 0.65rem;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      line-height: 1.1;
+      font-family: inherit;
+    }
+    .chat-lang-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.16);
+    }
+    .chat-lang-btn.active {
+      background: #fff;
+      color: var(--teal-dark);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+    .chat-lang-switcher.mini .chat-lang-btn {
+      padding: 0.2rem 0.45rem;
+      font-size: 0.72rem;
+    }
+    .telegram-badge-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: rgba(0, 136, 204, 0.12);
+      color: #0088cc;
+      border: 1px solid rgba(0, 136, 204, 0.35);
+      padding: 0.22rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .telegram-badge-link:hover {
+      background: #0088cc;
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0, 136, 204, 0.25);
+    }
 
     .chat-suggestions {
       background: var(--band-warm);
@@ -1533,8 +1593,13 @@
               </div>
             </div>
             <div>
-              <h4 data-i18n="alerts_title">Caregiver Alerts</h4>
-              <p style="color:var(--muted);margin-bottom:0.6rem" data-i18n="alerts_hint">Demo log only. Nothing is sent to a real caregiver.</p>
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.35rem;">
+                <h4 data-i18n="alerts_title" style="margin:0;">Caregiver Live Alerts</h4>
+                <a href="https://t.me/VRUSHSEVABOT" target="_blank" rel="noopener" class="telegram-badge-link" title="Open Telegram Caregiver Notification Bot">
+                  <span>✈️</span> @VRUSHSEVABOT Active
+                </a>
+              </div>
+              <p style="color:var(--muted);font-size:0.83rem;margin-bottom:0.6rem">Connected to server: records are logged to database and dispatched to Telegram.</p>
               <ul class="alerts" id="alert-log"></ul>
             </div>
           </div>
@@ -1563,7 +1628,12 @@
         <article class="card reveal" id="med-demo">
           
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.6rem;">
-            <h3 data-i18n="med_title" style="margin:0;">Medication Tracker</h3>
+            <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+              <h3 data-i18n="med_title" style="margin:0;">Medication Tracker</h3>
+              <a href="https://t.me/VRUSHSEVABOT" target="_blank" rel="noopener" class="telegram-badge-link" title="Sync notifications with Telegram">
+                <span>✈️</span> Telegram Sync
+              </a>
+            </div>
             <button type="button" class="btn btn-primary btn-sm" id="btn-open-med" data-i18n="med_add">+ Add Medication</button>
           </div>
           <p><span class="demo-badge" data-i18n="demo_only">Demo data only</span></p>
@@ -1720,7 +1790,14 @@
                 <p data-i18n="chat_status_desc">Compassionate 24/7 Dementia &amp; Elder Care Support</p>
               </div>
             </div>
-            <button type="button" class="chat-btn-clear" id="chat-clear-btn" data-i18n="chat_clear">Clear Chat</button>
+            <div class="chat-header-actions">
+              <div class="chat-lang-switcher" role="group" aria-label="Select Chatbot Language">
+                <button type="button" class="chat-lang-btn active" data-chat-lang="en" title="English">English</button>
+                <button type="button" class="chat-lang-btn" data-chat-lang="hi" title="हिंदी (Hindi)">हिंदी</button>
+                <button type="button" class="chat-lang-btn" data-chat-lang="mr" title="मराठी (Marathi)">मराठी</button>
+              </div>
+              <button type="button" class="chat-btn-clear" id="chat-clear-btn" data-i18n="chat_clear">Clear Chat</button>
+            </div>
           </div>
 
           <div class="chat-suggestions" id="chat-suggestions-bar">
@@ -2036,7 +2113,14 @@
           <p style="font-size:0.75rem;">Dementia &amp; Elder Care Guide</p>
         </div>
       </div>
-      <button type="button" class="drawer-close-btn" id="sevabot-drawer-close" aria-label="Close chat">×</button>
+      <div class="chat-header-actions">
+        <div class="chat-lang-switcher mini" role="group" aria-label="Select Chatbot Language">
+          <button type="button" class="chat-lang-btn active" data-chat-lang="en" title="English">EN</button>
+          <button type="button" class="chat-lang-btn" data-chat-lang="hi" title="हिंदी (Hindi)">हिं</button>
+          <button type="button" class="chat-lang-btn" data-chat-lang="mr" title="मराठी (Marathi)">मरा</button>
+        </div>
+        <button type="button" class="drawer-close-btn" id="sevabot-drawer-close" aria-label="Close chat">×</button>
+      </div>
     </div>
     <div class="chat-suggestions" style="padding:0.5rem 0.8rem;gap:0.35rem;" id="drawer-suggestions">
       <button type="button" class="chip" data-prompt="How do I calm someone experiencing dementia confusion?">Calming confusion</button>

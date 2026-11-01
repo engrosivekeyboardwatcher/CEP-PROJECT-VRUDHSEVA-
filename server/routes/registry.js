@@ -96,6 +96,13 @@ router.post('/', (req, res) => {
     );
 
     const newRecord = db.prepare('SELECT * FROM unidentified_registry WHERE case_number = ?').get(case_number);
+
+    // Asynchronously dispatch real-time notification to Telegram Caregiver Bot
+    try {
+      const { notifyRegistryCase } = require('../telegram');
+      notifyRegistryCase(newRecord).catch(err => console.warn('[TELEGRAM REGISTRY DISPATCH ERROR]', err.message));
+    } catch (e) {}
+
     res.status(201).json({ success: true, message: 'Unidentified resident registered successfully', data: newRecord });
   } catch (err) {
     console.error('Error registering case:', err);

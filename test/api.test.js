@@ -263,6 +263,16 @@ async function runTests() {
       assert(data.model.includes('qwen') || data.model.includes('gpt'));
     });
 
+    // 13. Telegram Caregiver Bot Status
+    await test('GET /api/telegram/status returns active bot info', async () => {
+      const { status, data } = await request('/api/telegram/status');
+      assert.strictEqual(status, 200);
+      assert.strictEqual(data.success, true);
+      assert.strictEqual(data.enabled, true);
+      assert.strictEqual(data.username, 'VRUSHSEVABOT');
+      assert(data.botUrl.includes('VRUSHSEVABOT'));
+    });
+
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }

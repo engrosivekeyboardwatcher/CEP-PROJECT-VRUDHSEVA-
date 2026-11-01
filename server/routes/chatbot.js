@@ -26,7 +26,7 @@ Keep your replies clear, structured (with bullet points or gentle steps when giv
 // POST /api/chat - Query the Dementia & Elder Care Bot
 router.post('/', async (req, res) => {
   try {
-    const { message, history = [] } = req.body;
+    const { message, history = [], language = 'en' } = req.body;
 
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return res.status(400).json({
@@ -45,6 +45,17 @@ router.post('/', async (req, res) => {
       });
     }
 
+    // Determine targeted language instruction for Groq Qwen
+    let langInstruction = '';
+    const cleanLang = String(language).toLowerCase();
+    if (cleanLang === 'hi' || cleanLang === 'hindi') {
+      langInstruction = '\n\nIMPORTANT LANGUAGE REQUIREMENT: The user has selected HINDI (हिंदी). You MUST compose your entire response in clear, empathetic, respectful Hindi using standard Devanagari script (e.g. use respectful terms like दादाजी, दादीजी, आदरपूर्वक भाषा, और स्पष्ट बिंदु). Do NOT reply in English unless specifically requested.';
+    } else if (cleanLang === 'mr' || cleanLang === 'marathi') {
+      langInstruction = '\n\nIMPORTANT LANGUAGE REQUIREMENT: The user has selected MARATHI (मराठी). You MUST compose your entire response in clear, empathetic, respectful Marathi using standard Devanagari script (e.g. use respectful terms like आजी, आजोबा, काकाजी, काळजीपूर्वक मार्गदर्शन, आणि मुद्देसूद उत्तरे). Do NOT reply in English unless specifically requested.';
+    } else {
+      langInstruction = '\n\nIMPORTANT LANGUAGE REQUIREMENT: The user has selected ENGLISH. Provide clear, empathetic, structured caregiving guidance in English.';
+    }
+
     // Build the messages payload with past turns (capped to last 8 turns for speed & context)
     const formattedHistory = Array.isArray(history)
       ? history.slice(-8).map(h => ({
@@ -54,7 +65,7 @@ router.post('/', async (req, res) => {
       : [];
 
     const messages = [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: SYSTEM_PROMPT + langInstruction },
       ...formattedHistory,
       { role: 'user', content: message.trim().slice(0, 3000) }
     ];
@@ -69,7 +80,7 @@ router.post('/', async (req, res) => {
         model: model,
         messages: messages,
         temperature: 0.6,
-        max_tokens: 800,
+        max_tokens: 500,
         top_p: 0.95
       })
     });
@@ -78,9 +89,9 @@ router.post('/', async (req, res) => {
       const errorBody = await response.text();
       console.error('[GROQ API ERROR]', response.status, errorBody);
 
-      // Fallback to alternative model if current model has an issue
-      if (response.status === 404 || errorBody.includes('model_not_found')) {
-        console.log('[GROQ] Attempting fallback model openai/gpt-oss-120b...');
+      // Fallback to alternative model if current model has a rate limit or lookup issue
+      if (response.status === 429 || response.status === 404 || errorBody.includes('rate_limit') || errorBody.includes('model_not_found')) {
+        console.log('[GROQ] Attempting resilient fallback model openai/gpt-oss-120b...');
         const fallbackRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -91,7 +102,7 @@ router.post('/', async (req, res) => {
             model: 'openai/gpt-oss-120b',
             messages: messages,
             temperature: 0.6,
-            max_tokens: 800
+            max_tokens: 500
           })
         });
 
@@ -102,9 +113,17 @@ router.post('/', async (req, res) => {
             success: true,
             reply: reply || 'I am here to support you. How else can I assist with your caregiving today?',
             model: 'openai/gpt-oss-120b',
+            language: cleanLang,
             usage: fallbackData.usage
           });
         }
+      }
+
+      if (response.status === 429) {
+        return res.status(429).json({
+          success: false,
+          error: 'The AI care service is momentarily busy due to high traffic. Please wait a few seconds and try again.'
+        });
       }
 
       return res.status(response.status).json({
@@ -120,6 +139,7 @@ router.post('/', async (req, res) => {
       success: true,
       reply: reply || 'I am here to help you. Could you please rephrase your caregiving question?',
       model: data.model || model,
+      language: cleanLang,
       usage: data.usage
     });
 
